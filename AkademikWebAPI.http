@@ -1,0 +1,6 @@
+@AkademikWebAPI_HostAddress = http://localhost:5220
+
+GET {{AkademikWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

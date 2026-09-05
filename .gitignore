@@ -1,0 +1,17 @@
+# Derleme (Build) ve Log Dosyaları
+[Bb]in/
+[Oo]bj/
+*.log
+
+# SQLite Veritabanı
+*.db
+*.db-shm
+*.db-wal
+
+# Editör ve IDE Dosyaları (Kişisel ayarlar gitmesin)
+.vscode/
+.vs/
+*.user
+
+# Ortam Değişkenleri ve Sırlar
+appsettings.Development.json

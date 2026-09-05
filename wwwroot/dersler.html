@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <link rel="icon" href="data:,">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ders ve Akademisyen Yönetimi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
+        .konteyner { max-width: 1000px; margin: auto; }
+        .kart { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .tablo-sarmalayici { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; margin-bottom: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #343a40; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        input, select { display: block; margin-bottom: 15px; width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 5px; }
+        .btn-yesil { background-color: #28a745; width: 100%; }
+        .btn-mavi { background-color: #007bff; width: 100%; }
+        .btn-sari { background-color: #ffc107; color: black; padding: 6px 12px; }
+        .btn-kirmizi { background-color: #dc3545; padding: 6px 12px; }
+        .btn-nav { background-color: #6c757d; color: white; padding: 10px 15px; text-decoration: none; display: inline-block; border-radius: 5px; margin-right: 5px; margin-bottom: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="konteyner">
+        <a href="index.html" class="btn-nav" style="background-color: #007bff;">🔙 Öğrenci Paneline Dön</a>
+        <a href="ders_secimi.html" class="btn-nav" style="background-color: #ffc107; color: black;">🎓 Ders Atama Paneline Git ➔</a>
+        <a href="notlar.html" class="btn-nav" style="background-color: #6f42c1; color: white; margin-left: 5px;">📝 Not Paneline Git ➔</a>
+
+        <h2 style="color: #333;">Akademisyen ve Ders Yönetim Paneli</h2>
+
+        <!-- YENİ AKADEMİSYEN EKLEME -->
+        <div class="kart">
+            <h3>Yeni Akademisyen Ekle</h3>
+            <label>Unvan:</label>
+            <input type="text" id="unvanKutusu" placeholder="Örn: Prof. Dr. / Doç. Dr.">
+            <label>Ad Soyad:</label>
+            <input type="text" id="hocaAdKutusu" placeholder="Örn: Ahmet Yılmaz">
+            <button class="btn-mavi" onclick="akademisyenEkle()">Akademisyeni Kaydet</button>
+        </div>
+
+        <!-- AKADEMİSYENLER TABLOSU -->
+        <div class="kart">
+            <h3>Kayıtlı Akademisyenler Listesi</h3>
+            <div class="tablo-sarmalayici">
+                <table id="akademisyenTablosu">
+                    <thead>
+                        <tr>
+                            <th>Unvan</th>
+                            <th>Ad Soyad</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Akademisyenler buraya dinamik olarak dolacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- YENİ DERS EKLEME -->
+        <div class="kart">
+            <h3>Yeni Ders Ekle</h3>
+            <label>Ders Kodu:</label>
+            <input type="text" id="dersKoduKutusu" placeholder="Örn: MAT101">
+            <label>Ders Adı:</label>
+            <input type="text" id="dersAdiKutusu" placeholder="Örn: Matematik">
+            <label>Değerlendirme Kriterleri (Opsiyonel):</label>
+            <input type="text" id="dersParametreleri" placeholder="Örn: Vize:20, Lab:20, Devam:15, Final:45">
+            <button class="btn-yesil" onclick="dersEkle()">Dersi Kaydet</button>
+        </div>
+
+        <!-- KAYITLI DERSLER TABLOSU -->
+        <div class="kart">
+            <h3>Kayıtlı Dersler ve Hoca Atama Listesi</h3>
+            <div class="tablo-sarmalayici">
+                <table id="dersTablosu">
+                    <thead>
+                        <tr>
+                            <th>Ders Kodu</th>
+                            <th>Ders Adı</th>
+                            <th>Mevcut Sorumlu Hoca</th>
+                            <th>İşlem (Atama / Silme)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dersler buraya dinamik olarak dolacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalHocalar = [];
+
+        window.onload = function () {
+            akademisyenleriYukle();
+        };
+
+        // AKADEMİSYEN İŞLEMLERİ
+        function akademisyenleriYukle() {
+            fetch('/api/Akademisyen')
+                .then(cevap => cevap.json())
+                .then(hocalar => {
+                    globalHocalar = hocalar; 
+                    
+                    // Tablo Doldurma
+                    const akaTabloGovdesi = document.querySelector("#akademisyenTablosu tbody");
+                    akaTabloGovdesi.innerHTML = "";
+
+                    hocalar.forEach(h => {
+                        akaTabloGovdesi.innerHTML += `<tr>
+                                                        <td>${h.unvan}</td>
+                                                        <td>${h.adSoyad}</td>
+                                                        <td><button class="btn-kirmizi" onclick="akademisyenSil(${h.akademisyenId})">Sil</button></td>
+                                                      </tr>`;
+                    });
+
+                    dersleriGetir(); // Akademisyenler yüklendikten sonra dersleri getir
+                })
+                .catch(hata => console.error("Hoca yükleme hatası:", hata));
+        }
+
+        function akademisyenEkle() {
+            const unvan = document.getElementById("unvanKutusu").value.trim();
+            const adSoyad = document.getElementById("hocaAdKutusu").value.trim();
+
+            if (!unvan || !adSoyad) {
+                alert("Lütfen unvan ve ad soyad alanlarını boş bırakmayın!");
+                return;
+            }
+
+            fetch('/api/Akademisyen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ unvan: unvan, adSoyad: adSoyad })
+            })
+            .then(cevap => cevap.json())
+            .then(data => {
+                alert(data.mesaj);
+                akademisyenleriYukle();
+                document.getElementById("unvanKutusu").value = "";
+                document.getElementById("hocaAdKutusu").value = "";
+            });
+        }
+
+        function akademisyenSil(id) {
+            if(confirm("Bu akademisyeni silmek istediğinize emin misiniz?")) {
+                fetch('/api/Akademisyen/' + id, { method: 'DELETE' })
+                .then(cevap => cevap.json())
+                .then(data => {
+                    alert(data.mesaj);
+                    akademisyenleriYukle(); 
+                })
+                .catch(hata => console.error("Hoca silme hatası:", hata));
+            }
+        }
+
+        // DERS İŞLEMLERİ
+        function dersEkle() {
+            const kod = document.getElementById("dersKoduKutusu").value.trim();
+            const ad = document.getElementById("dersAdiKutusu").value.trim();
+            const paramStr = document.getElementById("dersParametreleri").value.trim();
+
+            if (!kod || !ad) {
+                alert("Lütfen ders kodu ve adını boş bırakmayın!");
+                return;
+            }
+
+            const parametreler = {};
+            if(paramStr) {
+                paramStr.split(',').forEach(p => {
+                    const parts = p.split(':');
+                    if(parts.length === 2) parametreler[parts[0].trim()] = parseInt(parts[1].trim());
+                });
+            }
+
+            fetch('/api/ders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kod: kod, isim: ad, parametreler: Object.keys(parametreler).length > 0 ? parametreler : undefined })
+            })
+            .then(async cevap => {
+                const text = await cevap.text();
+                return text ? JSON.parse(text) : { mesaj: "Ders başarıyla eklendi!" };
+            })
+            .then(data => {
+                alert(data.mesaj);
+                dersleriGetir();
+                document.getElementById("dersKoduKutusu").value = "";
+                document.getElementById("dersAdiKutusu").value = "";
+                document.getElementById("dersParametreleri").value = "";
+            });
+        }
+
+        function dersleriGetir() {
+            fetch('/api/ders')
+                .then(cevap => cevap.json())
+                .then(dersler => {
+                    const tabloGovdesi = document.querySelector("#dersTablosu tbody");
+                    tabloGovdesi.innerHTML = "";
+
+                    dersler.forEach(d => {
+                        const hocaBilgisi = d.akademisyen ? `${d.akademisyen.unvan} ${d.akademisyen.adSoyad}` : '<span style="color:#aaa;">Atanmadı</span>';
+
+                        let hocaSecimHtml = `<select id="select_${d.kod}" style="margin-bottom:0; padding:6px; width: auto; display: inline-block;">
+                                                <option value="">-- Hoca Seç --</option>`;
+                        
+                        globalHocalar.forEach(h => {
+                            const seciliMi = (d.akademisyenId === h.akademisyenId) ? "selected" : "";
+                            hocaSecimHtml += `<option value="${h.akademisyenId}" ${seciliMi}>${h.unvan} ${h.adSoyad}</option>`;
+                        });
+                        hocaSecimHtml += `</select>`;
+
+                        const satir = `<tr>
+                                            <td><b>${d.kod}</b></td>
+                                            <td>${d.isim}</td>
+                                            <td>${hocaBilgisi}</td>
+                                            <td>
+                                                <div style="display: flex; gap: 5px; align-items: center;">
+                                                    ${hocaSecimHtml}
+                                                    <button class="btn-sari" onclick="hocaAta('${d.kod}')">Ata</button>
+                                                    <button class="btn-kirmizi" onclick="dersSil('${d.kod}')">Sil</button>
+                                                </div>
+                                            </td>
+                                       </tr>`;
+                        tabloGovdesi.innerHTML += satir;
+                    });
+                })
+                .catch(hata => console.error("Dersleri getirme hatası:", hata));
+        }
+
+        function hocaAta(dersKodu) {
+            const secilenHocaId = document.getElementById("select_" + dersKodu).value;
+
+            fetch('/api/ders/' + dersKodu + '/hoca-ata', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ akademisyenId: secilenHocaId ? parseInt(secilenHocaId) : null })
+            })
+            .then(cevap => cevap.json())
+            .then(data => {
+                alert(data.mesaj);
+                dersleriGetir(); 
+            })
+            .catch(hata => console.error("Hoca atama hatası:", hata));
+        }
+
+        function dersSil(dersKodu) {
+            if(confirm(dersKodu + " kodlu dersi silmek istediğinize emin misiniz?")) {
+                fetch('/api/ders/' + dersKodu, { method: 'DELETE' })
+                .then(cevap => cevap.json())
+                .then(data => {
+                    alert(data.mesaj);
+                    dersleriGetir(); 
+                })
+                .catch(hata => console.error("Ders silme hatası:", hata));
+            }
+        }
+    </script>
+</body>
+</html>

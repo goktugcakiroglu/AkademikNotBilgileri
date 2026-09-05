@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <link rel="icon" href="data:,">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akademik Sistem Yönetimi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+            margin: 0;
+        }
+
+        .konteyner {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .kart {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tablo-sarmalayici {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #343a40;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 5px;
+            transition: 0.3s;
+        }
+
+            .btn:hover {
+                opacity: 0.8;
+            }
+
+        .btn-yesil {
+            background-color: #28a745;
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+        }
+
+        .btn-sari {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .btn-kirmizi {
+            background-color: #dc3545;
+        }
+
+        .btn-nav {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 5px;
+            margin-right: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="konteyner">
+        <a href="dersler.html" class="btn-nav" style="background-color: #17a2b8;">📚 Ders Paneline Git ➔</a>
+        <a href="ders_secimi.html" class="btn-nav" style="background-color: #ffc107; color: black;">🎓 Ders Atama Paneline Git ➔</a>
+        <a href="notlar.html" style="background-color: #6f42c1; color: white; padding: 10px 15px; text-decoration: none; display: inline-block; margin-bottom: 15px; margin-left: 5px; font-weight: bold; border-radius: 5px;">📝 Not Paneline Git ➔</a>
+        
+        <h1 style="color: #333;">Öğrenci Yönetim Sistemi</h1>
+
+        <!-- Form ID'leri JavaScript ile birebir eşleştirildi -->
+        <div class="kart">
+            <h3>Yeni Öğrenci Ekle / Düzenle</h3>
+            <label>Öğrenci No:</label>
+            <input type="text" id="ogrNoKutusu" placeholder="Örn: 123456">
+            <label>Ad Soyad:</label>
+            <input type="text" id="isimKutusu" placeholder="Örn: Göktuğ Ç.">
+            <button id="kaydetButonu" class="btn btn-yesil" onclick="ogrenciyiKaydet()">Sisteme Ekle</button>
+        </div>
+
+        <!-- Eksik olan tablo ve ogrenciTablosu ID'si yerine eklendi -->
+        <div class="kart">
+            <h3>Kayıtlı Öğrenciler ve Dersleri</h3>
+            <div class="tablo-sarmalayici">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Öğrenci No</th>
+                            <th>Ad Soyad</th>
+                            <th>Aldığı Dersler</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ogrenciTablosu">
+                        <!-- C# API'den gelen veriler buraya dolacak -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let duzenlenenOgrenciNo = null;
+
+        window.onload = function () {
+            ogrencileriGetir();
+        };
+
+        function ogrencileriGetir() {
+            fetch('/api/ogrenci')
+                .then(cevap => cevap.json())
+                .then(ogrenciler => {
+                    const tabloGovdesi = document.getElementById("ogrenciTablosu");
+                    tabloGovdesi.innerHTML = "";
+
+                    ogrenciler.forEach(ogr => {
+                        const dersListesi = ogr.dersler || [];
+                        const aldigiDersler = dersListesi.length > 0
+                            ? dersListesi.join('<br>')
+                            : '<span style="color:gray;">Ders Yok</span>';
+
+                        const satir = `<tr>
+                                                <td>${ogr.ogrenciNo}</td>
+                                                <td><b>${ogr.isim}</b></td>
+                                                <td>${aldigiDersler}</td>
+                                                <td>
+                                                    <button class="btn btn-sari" onclick="ogrenciDuzenle('${ogr.ogrenciNo}', '${ogr.isim}')">Düzenle</button>
+                                                    <button class="btn btn-kirmizi" onclick="ogrenciSil('${ogr.ogrenciNo}')">Sil</button>
+                                                </td>
+                                           </tr>`;
+                        tabloGovdesi.innerHTML += satir;
+                    });
+                })
+                .catch(hata => console.error("Veri çekme hatası:", hata));
+        }
+
+        function ogrenciDuzenle(no, isim) {
+            const noKutusu = document.getElementById("ogrNoKutusu");
+            noKutusu.value = no;
+            noKutusu.readOnly = true;
+
+            document.getElementById("isimKutusu").value = isim;
+
+            const buton = document.getElementById("kaydetButonu");
+            buton.innerText = "Değişiklikleri Kaydet";
+            buton.style.backgroundColor = "#ffc107";
+            buton.style.color = "black";
+
+            duzenlenenOgrenciNo = no;
+        }
+
+        function formuSifirla() {
+            const noKutusu = document.getElementById("ogrNoKutusu");
+            noKutusu.value = "";
+            noKutusu.readOnly = false;
+
+            document.getElementById("isimKutusu").value = "";
+
+            const buton = document.getElementById("kaydetButonu");
+            buton.innerText = "Sisteme Ekle";
+            buton.style.backgroundColor = "#28a745";
+            buton.style.color = "white";
+
+            duzenlenenOgrenciNo = null;
+        }
+
+        function ogrenciyiKaydet() {
+            const no = document.getElementById("ogrNoKutusu").value;
+            const isim = document.getElementById("isimKutusu").value;
+
+            if (!no || !isim) {
+                alert("Lütfen alanları boş bırakmayın!");
+                return;
+            }
+
+            const url = duzenlenenOgrenciNo ? ('/api/ogrenci/' + duzenlenenOgrenciNo) : '/api/ogrenci';
+            const metod = duzenlenenOgrenciNo ? 'PUT' : 'POST';
+
+            fetch(url, {
+                method: metod,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ogrenciNo: no, isim: isim })
+            })
+                .then(cevap => cevap.json())
+                .then(data => {
+                    alert(data.mesaj);
+                    ogrencileriGetir();
+                    formuSifirla();
+                })
+                .catch(hata => console.error("Hata:", hata));
+        }
+
+        function ogrenciSil(ogrenciNo) {
+            if (confirm(ogrenciNo + " numaralı öğrenciyi silmek istediğinize emin misiniz?")) {
+                fetch('/api/ogrenci/' + ogrenciNo, {
+                    method: 'DELETE'
+                })
+                    .then(cevap => cevap.json())
+                    .then(data => {
+                        alert(data.mesaj);
+                        ogrencileriGetir();
+                    })
+                    .catch(hata => console.error("Silme hatası:", hata));
+            }
+        }
+    </script>
+</body>
+</html>

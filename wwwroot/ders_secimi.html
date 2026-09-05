@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <link rel="icon" href="data:,">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ders Atama Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
+        .konteyner { max-width: 1000px; margin: auto; }
+        .kart { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        select { display: block; margin-bottom: 15px; width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 12px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 5px; width: 100%; }
+        .btn-yesil { background-color: #28a745; }
+        .btn-yesil:hover { opacity: 0.8; }
+        .btn-nav { background-color: #6c757d; color: white; padding: 10px 15px; text-decoration: none; display: inline-block; border-radius: 5px; margin-right: 5px; margin-bottom: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="konteyner">
+        <a href="index.html" class="btn-nav" style="background-color: #007bff;">🔙 Öğrenci Paneline Dön</a>
+        <a href="dersler.html" class="btn-nav" style="background-color: #17a2b8;">📚 Ders Paneline Git</a>
+        <a href="notlar.html" class="btn-nav" style="background-color: #6f42c1; color: white; margin-left: 5px;">📝 Not Paneline Git ➔</a>
+
+        <h2 style="color: #333;">Öğrenciye Ders Atama Paneli</h2>
+        
+        <div class="kart">
+            <h3>Ders Atama İşlemi</h3>
+            <label>Öğrenci Seçin:</label>
+            <select id="ogrenciDropdown">
+                <option value="">-- Yükleniyor... --</option>
+            </select>
+
+            <label>Atanacak Dersi Seçin:</label>
+            <select id="dersDropdown">
+                <option value="">-- Yükleniyor... --</option>
+            </select>
+
+            <button class="btn-yesil" onclick="dersAta()">Dersi Atamayı Onayla</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            datalariYukle();
+        };
+
+        function datalariYukle() {
+            fetch('/api/ogrenci')
+                .then(cevap => cevap.json())
+                .then(ogrenciler => {
+                    const ogrSelect = document.getElementById("ogrenciDropdown");
+                    ogrSelect.innerHTML = '<option value="">-- Bir Öğrenci Seçiniz --</option>';
+                    ogrenciler.forEach(ogr => {
+                        ogrSelect.innerHTML += `<option value="${ogr.ogrenciNo}">${ogr.ogrenciNo} - ${ogr.isim}</option>`;
+                    });
+                });
+
+            fetch('/api/ders')
+                .then(cevap => cevap.json())
+                .then(dersler => {
+                    const dersSelect = document.getElementById("dersDropdown");
+                    dersSelect.innerHTML = '<option value="">-- Bir Ders Seçiniz --</option>';
+                    dersler.forEach(d => {
+                        dersSelect.innerHTML += `<option value="${d.kod}">${d.kod} - ${d.isim}</option>`;
+                    });
+                });
+        }
+
+        function dersAta() {
+            const secilenOgrenci = document.getElementById("ogrenciDropdown").value;
+            const secilenDers = document.getElementById("dersDropdown").value;
+
+            if (!secilenOgrenci || !secilenDers) {
+                alert("Lütfen listeden bir öğrenci ve bir ders seçtiğinizden emin olun!");
+                return;
+            }
+
+            fetch('/api/OgrenciDers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ogrenciNo: secilenOgrenci, dersKodu: secilenDers })
+            })
+            .then(async cevap => {
+                const text = await cevap.text();
+                return text ? JSON.parse(text) : { mesaj: "Atama başarılı!" };
+            })
+            .then(data => alert(data.mesaj))
+            .catch(hata => console.error("Kayıt hatası:", hata));
+        }
+    </script>
+</body>
+</html>

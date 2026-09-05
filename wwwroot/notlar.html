@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <link rel="icon" href="data:,">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinamik Not Yönetim Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
+        .konteyner { max-width: 1000px; margin: auto; }
+        .kart { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .tablo-sarmalayici { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #343a40; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .btn-yesil { background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-nav { background-color: #6c757d; color: white; padding: 10px 15px; text-decoration: none; display: inline-block; border-radius: 5px; margin-right: 5px; margin-bottom: 15px; font-weight: bold; }
+        .not-kutu { background: #e9ecef; padding: 5px 10px; border-radius: 5px; text-align: center; }
+        .not-input { width: 50px; padding: 5px; border: 1px solid #ccc; border-radius: 5px; text-align: center; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="konteyner">
+        <a href="index.html" class="btn-nav" style="background-color: #007bff;">🔙 Öğrenci Paneli</a>
+        <a href="ders_secimi.html" class="btn-nav" style="background-color: #ffc107; color: black;">🎓 Ders Atama Paneli</a>
+
+        <h2 style="color: #333;">Sınav Notları Yönetimi (Dinamik)</h2>
+        
+        <div class="kart">
+            <h3>Öğrenci Not Listesi ve Ortalama Hesaplama</h3>
+            <div class="tablo-sarmalayici">
+                <table id="notTablosu">
+                    <thead>
+                        <tr>
+                            <th>Öğrenci</th>
+                            <th>Ders</th>
+                            <th>Değerlendirme Kriterleri</th>
+                            <th style="text-align: center;">Ortalama</th> <!-- YENİ KOLON -->
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dinamik kolonlar buraya gelecek -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            notlariGetir();
+        };
+
+        function notlariGetir() {
+            fetch('/api/OgrenciDers')
+                .then(cevap => cevap.json())
+                .then(kayitlar => {
+                    const tablo = document.querySelector("#notTablosu tbody");
+                    tablo.innerHTML = "";
+                    
+                    kayitlar.forEach(k => {
+                        let notlarHtml = `<div style="display: flex; gap: 10px; flex-wrap: wrap;">`;
+                        let toplamOrtalama = 0;
+                        let tumNotlarGirildiMi = true;
+                        
+                        // Dinamik parametreleri okuyor ve ortalamayı anında hesaplıyoruz
+                        for (const [paramAd, yuzde] of Object.entries(k.parametreler)) {
+                            const notDegeri = k.notlar && k.notlar[paramAd] !== undefined ? k.notlar[paramAd] : '';
+                            
+                            // Eğer not girilmişse matematiksel hesaplamasını yapıp ortalamaya ekle
+                            if (notDegeri !== '') {
+                                toplamOrtalama += (parseInt(notDegeri) * parseInt(yuzde)) / 100;
+                            } else {
+                                tumNotlarGirildiMi = false; // Boş kutu varsa eksik not olduğunu işaretle
+                            }
+
+                            notlarHtml += `
+                                <div class="not-kutu">
+                                    <label style="font-size: 12px; font-weight: bold; color:#333;">${paramAd} <br>(%${yuzde})</label><br>
+                                    <input type="number" data-param="${paramAd}" class="not-input not-ogr-${k.ogrenciNo}-ders-${k.dersKodu}" value="${notDegeri}" min="0" max="100">
+                                </div>
+                            `;
+                        }
+                        notlarHtml += `</div>`;
+
+                        // Ortalama gösterimini durumuna göre (Eksik / Tamamlandı) renklendiriyoruz
+                        let ortalamaGosterim = "";
+                        if (Object.keys(k.parametreler).length === 0) {
+                            ortalamaGosterim = `<span style="color:#aaa; font-size:12px;">Parametre Yok</span>`;
+                        } else if (tumNotlarGirildiMi) {
+                            ortalamaGosterim = `<b style="color:#28a745; font-size: 18px;">${toplamOrtalama.toFixed(2)}</b>`;
+                        } else {
+                            ortalamaGosterim = `<span style="color:#ffc107; font-weight:bold; font-size: 18px;">${toplamOrtalama.toFixed(2)}</span><br><small style="color:gray; font-size:11px;">(Eksik Not)</small>`;
+                        }
+
+                        tablo.innerHTML += `<tr>
+                            <td><b>${k.ogrenciNo}</b><br><small>${k.ogrenciAdi}</small></td>
+                            <td><b>${k.dersKodu}</b><br><small>${k.dersAdi}</small></td>
+                            <td>${notlarHtml}</td>
+                            <td style="text-align: center; vertical-align: middle; background-color: #fcfcfc;">${ortalamaGosterim}</td>
+                            <td style="vertical-align: middle;"><button class="btn-yesil" onclick="notKaydet('${k.ogrenciNo}', '${k.dersKodu}')">Kaydet</button></td>
+                        </tr>`;
+                    });
+                })
+                .catch(err => console.error("Not listeleme hatası:", err));
+        }
+
+        function notKaydet(ogrNo, dersKodu) {
+            const inputs = document.querySelectorAll(`.not-ogr-${ogrNo}-ders-${dersKodu}`);
+            const girilenNotlar = {};
+            
+            inputs.forEach(input => {
+                const paramAdi = input.getAttribute("data-param");
+                if(input.value !== "") {
+                    girilenNotlar[paramAdi] = parseInt(input.value);
+                }
+            });
+
+            fetch('/api/OgrenciDers/not-giris', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    ogrenciNo: ogrNo, 
+                    dersKodu: dersKodu, 
+                    girilenNotlar: girilenNotlar 
+                })
+            })
+            .then(cevap => cevap.json())
+            .then(data => {
+                alert(data.mesaj);
+                notlariGetir(); // Kaydettikten sonra ortalamanın güncellenmesi için tabloyu yenile
+            })
+            .catch(err => console.error("Kaydetme hatası:", err));
+        }
+    </script>
+</body>
+</html>
