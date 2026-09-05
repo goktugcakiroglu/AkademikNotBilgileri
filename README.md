@@ -6,7 +6,7 @@ Bu proje, üniversite veya eğitim kurumları için geliştirilmiş, **ASP.NET C
 
 * **Dinamik Parametrik Not Sistemi:** Her dersin değerlendirme kriteri (Örn: %20 Lab, %30 Vize, %50 Final) sisteme veritabanı üzerinden JSON formatında esnek olarak tanımlanabilir.
 * **Anlık Ortalama Hesaplama:** Ön yüzde girilen notlar, dersin kendi ağırlık yüzdelerine göre JavaScript ile anında hesaplanarak dinamik olarak tabloya yansıtılır. Eksik not girişlerinde sistem otomatik uyarı verir.
-* **Kusursuz İlişkisel Veritabanı:** Entity Framework Core Code-First yaklaşımı kullanılarak SQLite üzerinde `One-to-Many` (Akademisyen-Ders) ve `Many-to-Many` (Öğrenci-Ders) ilişkiler kusursuzca kurulmuştur.
+* **İlişkisel Veritabanı:** Entity Framework Core Code-First yaklaşımı kullanılarak SQLite üzerinde `One-to-Many` (Akademisyen-Ders) ve `Many-to-Many` (Öğrenci-Ders) ilişkiler kurulmuştur.
 * **SPA (Single Page Application) Deneyimi:** Herhangi bir frontend framework'ü kullanılmadan, yalnızca Vanilla JS ve Fetch API ile sayfa yenilenmeden çalışan, son derece hızlı ve duyarlı bir yönetim arayüzü inşa edilmiştir.
 * **Güvenli Veri Akışı:** Yabancı anahtar (Foreign Key) kilitlenmelerini, JSON serileştirme döngülerini (Circular Reference) ve Null referans hatalarını önleyen sağlamlaştırılmış Backend mimarisi.
 
@@ -69,8 +69,3 @@ dotnet run
 ```
 
 Konsolda uygulamanın başladığına dair mesajı gördükten sonra tarayıcınızı açın ve uygulamanın `wwwroot` içindeki statik arayüzüne erişmek için `http://localhost:5220/index.html` (port numarası konsoldaki çıktıya göre değişebilir) adresine gidin.
-
-## 👨‍💻 Geliştirici
-
-**Göktuğ Çakıroğlu**  
-Computer Engineering Student
